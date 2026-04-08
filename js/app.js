@@ -1,0 +1,298 @@
+/**
+ * app.js
+ * ─────────────────────────────────────────────────────
+ * Lógica de la interfaz: navegación, formularios,
+ * renderizado de listas y comunicación con el storage.
+ * ─────────────────────────────────────────────────────
+ */
+
+/* ── INSTANCIA GLOBAL DEL ZOOLÓGICO ─────────────────── */
+const zoo = new Zoologico();
+
+/* ── INIT ────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  cargarDesdeStorage(zoo); // Restaurar desde localStorage
+  cargarDatosEjemplo();    // Solo si el zoo está vacío
+  initNav();
+  initForms();
+  renderDashboard();
+});
+
+
+/* ══════════════════════════════════════════════════════
+   DATOS DE EJEMPLO
+   Se insertan solo si el localStorage está vacío.
+   ══════════════════════════════════════════════════════ */
+function cargarDatosEjemplo() {
+  if (zoo.getAnimales().length > 0) return; // ya hay datos
+
+  zoo.agregarAnimal(new Mamifero(zoo.nextAnimalId(), 'Simba',  5, 'León africano',     'Dorado',    'Sí'));
+  zoo.agregarAnimal(new Ave    (zoo.nextAnimalId(), 'Pico',   2, 'Tucán toco',         45,          'Sí'));
+  zoo.agregarAnimal(new Reptil (zoo.nextAnimalId(), 'Rex',    8, 'Iguana verde',       'Queratina', 'No'));
+  zoo.agregarAnimal(new Mamifero(zoo.nextAnimalId(), 'Nala',  3, 'Elefante asiático',  'Gris liso', 'No'));
+  zoo.agregarAnimal(new Ave    (zoo.nextAnimalId(), 'Pluma',  1, 'Flamenco rosado',    120,         'Sí'));
+  zoo.agregarAnimal(new Reptil (zoo.nextAnimalId(), 'Víbora', 4, 'Cobra real',         'Lisa',      'Sí'));
+
+  zoo.agregarUsuario(new Usuario(zoo.nextUsuarioId(), 'Ana García',    'ana@zoo.com',    'admin'));
+  zoo.agregarUsuario(new Usuario(zoo.nextUsuarioId(), 'Carlos López',  'carlos@zoo.com', 'cuidador'));
+  zoo.agregarUsuario(new Usuario(zoo.nextUsuarioId(), 'Marta Ruiz',    'marta@zoo.com',  'veterinario'));
+
+  actualizarStorage(zoo);
+}
+
+
+/* ══════════════════════════════════════════════════════
+   NAVEGACIÓN
+   ══════════════════════════════════════════════════════ */
+function initNav() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      switchTab(target);
+    });
+  });
+}
+
+function switchTab(tabId) {
+  // Actualizar botones
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabId);
+  });
+  // Mostrar sección
+  document.querySelectorAll('.tab-section').forEach(s => {
+    s.classList.toggle('active', s.id === tabId);
+  });
+  // Renderizar contenido según pestaña
+  if (tabId === 'dashboard') renderDashboard();
+  if (tabId === 'animales')  renderAnimales();
+  if (tabId === 'usuarios')  renderUsuarios();
+}
+
+
+/* ══════════════════════════════════════════════════════
+   FORMULARIOS
+   ══════════════════════════════════════════════════════ */
+function initForms() {
+  // Mostrar/ocultar campos extra al cambiar el tipo
+  document.getElementById('a-tipo').addEventListener('change', toggleExtraFields);
+
+  // Botón registrar animal
+  document.getElementById('btn-add-animal').addEventListener('click', crearAnimal);
+
+  // Botón registrar usuario
+  document.getElementById('btn-add-user').addEventListener('click', crearUsuario);
+}
+
+/**
+ * Muestra los campos específicos del tipo de animal seleccionado.
+ */
+function toggleExtraFields() {
+  const tipo = document.getElementById('a-tipo').value;
+  ['mamifero', 'ave', 'reptil'].forEach(t => {
+    document.getElementById(`extra-${t}`).classList.toggle('hidden', t !== tipo);
+  });
+}
+
+/**
+ * Lee el formulario, crea la instancia correcta y la persiste.
+ */
+function crearAnimal() {
+  const nombre  = document.getElementById('a-nombre').value.trim();
+  const edad    = parseInt(document.getElementById('a-edad').value, 10);
+  const especie = document.getElementById('a-especie').value.trim();
+  const tipo    = document.getElementById('a-tipo').value;
+
+  if (!nombre || !especie || !tipo || isNaN(edad) || edad < 0) {
+    alert('Por favor, completa todos los campos obligatorios.');
+    return;
+  }
+
+  const id = zoo.nextAnimalId();
+  let animal;
+
+  switch (tipo) {
+    case 'mamifero':
+      animal = new Mamifero(id, nombre, edad, especie,
+        document.getElementById('a-pelaje').value.trim() || '—',
+        document.getElementById('a-gestacion').value);
+      break;
+    case 'ave':
+      animal = new Ave(id, nombre, edad, especie,
+        parseInt(document.getElementById('a-envergadura').value, 10) || 0,
+        document.getElementById('a-volar').value);
+      break;
+    case 'reptil':
+      animal = new Reptil(id, nombre, edad, especie,
+        document.getElementById('a-escama').value.trim() || '—',
+        document.getElementById('a-veneno').value);
+      break;
+  }
+
+  zoo.agregarAnimal(animal);
+  actualizarStorage(zoo);
+
+  // Limpiar formulario
+  ['a-nombre', 'a-edad', 'a-especie', 'a-pelaje', 'a-envergadura', 'a-escama'].forEach(
+    id => { document.getElementById(id).value = ''; }
+  );
+  document.getElementById('a-tipo').value = '';
+  toggleExtraFields();
+
+  mostrarAlerta('animal-alert');
+  renderAnimales();
+}
+
+/**
+ * Lee el formulario de usuario, crea y persiste.
+ */
+function crearUsuario() {
+  const nombre = document.getElementById('u-nombre').value.trim();
+  const correo = document.getElementById('u-correo').value.trim();
+  const rol    = document.getElementById('u-rol').value;
+
+  if (!nombre || !correo) {
+    alert('Por favor, completa nombre y correo.');
+    return;
+  }
+
+  const id = zoo.nextUsuarioId();
+  zoo.agregarUsuario(new Usuario(id, nombre, correo, rol));
+  actualizarStorage(zoo);
+
+  document.getElementById('u-nombre').value = '';
+  document.getElementById('u-correo').value = '';
+
+  mostrarAlerta('user-alert');
+  renderUsuarios();
+}
+
+/**
+ * Elimina un animal por ID y actualiza la vista.
+ * @param {number} id
+ */
+function eliminarAnimal(id) {
+  if (!confirm('¿Seguro que quieres eliminar este animal?')) return;
+  zoo.eliminarAnimal(id);
+  actualizarStorage(zoo);
+  renderAnimales();
+  renderDashboard();
+}
+
+/**
+ * Elimina un usuario por ID y actualiza la vista.
+ * @param {number} id
+ */
+function eliminarUsuario(id) {
+  if (!confirm('¿Seguro que quieres eliminar este usuario?')) return;
+  zoo.eliminarUsuario(id);
+  actualizarStorage(zoo);
+  renderUsuarios();
+}
+
+
+/* ══════════════════════════════════════════════════════
+   RENDERIZADO
+   ══════════════════════════════════════════════════════ */
+
+/** Renderiza el panel de estadísticas y animales recientes. */
+function renderDashboard() {
+  const animales = zoo.getAnimales();
+  const usuarios = zoo.getUsuarios();
+
+  document.getElementById('stat-total').textContent = animales.length;
+  document.getElementById('stat-mam').textContent   = animales.filter(a => a.tipo() === 'mamifero').length;
+  document.getElementById('stat-ave').textContent   = animales.filter(a => a.tipo() === 'ave').length;
+  document.getElementById('stat-rep').textContent   = animales.filter(a => a.tipo() === 'reptil').length;
+  document.getElementById('stat-users').textContent = usuarios.length;
+
+  const el = document.getElementById('dashboard-list');
+  if (!animales.length) {
+    el.innerHTML = '<p class="empty">Sin animales registrados.</p>';
+    return;
+  }
+  el.innerHTML = animales.slice(-6).reverse().map(a => itemAnimalHTML(a, false)).join('');
+}
+
+/** Renderiza la lista completa de animales con botón eliminar. */
+function renderAnimales() {
+  const animales = zoo.getAnimales();
+  const el = document.getElementById('animal-list');
+  if (!animales.length) {
+    el.innerHTML = '<p class="empty">Sin animales registrados.</p>';
+    return;
+  }
+  el.innerHTML = animales.map(a => itemAnimalHTML(a, true)).join('');
+}
+
+/** Renderiza la lista de usuarios con botón eliminar. */
+function renderUsuarios() {
+  const usuarios = zoo.getUsuarios();
+  const el = document.getElementById('user-list');
+  if (!usuarios.length) {
+    el.innerHTML = '<p class="empty">Sin usuarios registrados.</p>';
+    return;
+  }
+  el.innerHTML = usuarios.map(u => `
+    <div class="item-row">
+      <div class="item-info">
+        <div class="item-title">
+          ${escapeHtml(u.nombre)}
+          <span class="badge badge-${u.rol}">${labelRol(u.rol)}</span>
+        </div>
+        <div class="item-meta">${escapeHtml(u.correo)}</div>
+      </div>
+      <button class="btn btn-danger" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+    </div>
+  `).join('');
+}
+
+
+/* ── HELPERS ─────────────────────────────────────────── */
+
+/**
+ * Genera el HTML de una fila de animal.
+ * @param {Animal} a
+ * @param {boolean} conBoton - Mostrar botón eliminar
+ * @returns {string}
+ */
+function itemAnimalHTML(a, conBoton) {
+  const boton = conBoton
+    ? `<button class="btn btn-danger" onclick="eliminarAnimal(${a.id})">Eliminar</button>`
+    : '';
+  return `
+    <div class="item-row">
+      <div class="item-info">
+        <div class="item-title">
+          ${escapeHtml(a.nombre)}
+          <span class="badge badge-${a.tipo()}">${labelTipo(a.tipo())}</span>
+        </div>
+        <div class="item-meta">${escapeHtml(a.describir())}</div>
+      </div>
+      ${boton}
+    </div>
+  `;
+}
+
+function labelTipo(tipo) {
+  return { mamifero: 'Mamífero', ave: 'Ave', reptil: 'Reptil' }[tipo] || tipo;
+}
+
+function labelRol(rol) {
+  return { admin: 'Administrador', cuidador: 'Cuidador', veterinario: 'Veterinario' }[rol] || rol;
+}
+
+/** Muestra una alerta de éxito y la oculta después de 2.5s. */
+function mostrarAlerta(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 2500);
+}
+
+/** Escapa caracteres HTML para evitar XSS. */
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
