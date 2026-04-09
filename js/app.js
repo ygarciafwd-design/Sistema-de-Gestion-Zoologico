@@ -1,30 +1,15 @@
-/**
- * app.js
- * ─────────────────────────────────────────────────────
- * Lógica de la interfaz: navegación, formularios,
- * renderizado de listas y comunicación con el storage.
- * ─────────────────────────────────────────────────────
- */
-
-/* ── INSTANCIA GLOBAL DEL ZOOLÓGICO ─────────────────── */
 const zoo = new Zoologico();
 
-/* ── INIT ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  cargarDesdeStorage(zoo); // Restaurar desde localStorage
-  cargarDatosEjemplo();    // Solo si el zoo está vacío
+  cargarDesdeStorage(zoo);
+  cargarDatosEjemplo();
   initNav();
   initForms();
   renderDashboard();
 });
 
-
-/* ══════════════════════════════════════════════════════
-   DATOS DE EJEMPLO
-   Se insertan solo si el localStorage está vacío.
-   ══════════════════════════════════════════════════════ */
 function cargarDatosEjemplo() {
-  if (zoo.getAnimales().length > 0) return; // ya hay datos
+  if (zoo.getAnimales().length > 0) return;
 
   zoo.agregarAnimal(new Mamifero(zoo.nextAnimalId(), 'Simba',  5, 'León africano',     'Dorado',    'Sí'));
   zoo.agregarAnimal(new Ave    (zoo.nextAnimalId(), 'Pico',   2, 'Tucán toco',         45,          'Sí'));
@@ -40,10 +25,6 @@ function cargarDatosEjemplo() {
   actualizarStorage(zoo);
 }
 
-
-/* ══════════════════════════════════════════════════════
-   NAVEGACIÓN
-   ══════════════════════════════════════════════════════ */
 function initNav() {
   document.querySelectorAll('.navegacion-boton').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -54,38 +35,23 @@ function initNav() {
 }
 
 function switchTab(tabId) {
-  // Actualizar botones
   document.querySelectorAll('.navegacion-boton').forEach(b => {
     b.classList.toggle('activo', b.dataset.tab === tabId);
   });
-  // Mostrar sección
   document.querySelectorAll('.seccion-pestana').forEach(s => {
     s.classList.toggle('activo', s.id === tabId);
   });
-  // Renderizar contenido según pestaña
   if (tabId === 'dashboard') renderDashboard();
   if (tabId === 'animales')  renderAnimales();
   if (tabId === 'usuarios')  renderUsuarios();
 }
 
-
-/* ══════════════════════════════════════════════════════
-   FORMULARIOS
-   ══════════════════════════════════════════════════════ */
 function initForms() {
-  // Mostrar/ocultar campos extra al cambiar el tipo
   document.getElementById('a-tipo').addEventListener('change', toggleExtraFields);
-
-  // Botón registrar animal
   document.getElementById('btn-add-animal').addEventListener('click', crearAnimal);
-
-  // Botón registrar usuario
   document.getElementById('btn-add-user').addEventListener('click', crearUsuario);
 }
 
-/**
- * Muestra los campos específicos del tipo de animal seleccionado.
- */
 function toggleExtraFields() {
   const tipo = document.getElementById('a-tipo').value;
   ['mamifero', 'ave', 'reptil'].forEach(t => {
@@ -93,9 +59,6 @@ function toggleExtraFields() {
   });
 }
 
-/**
- * Lee el formulario, crea la instancia correcta y la persiste.
- */
 function crearAnimal() {
   const nombre  = document.getElementById('a-nombre').value.trim();
   const edad    = parseInt(document.getElementById('a-edad').value, 10);
@@ -131,7 +94,6 @@ function crearAnimal() {
   zoo.agregarAnimal(animal);
   actualizarStorage(zoo);
 
-  // Limpiar formulario
   ['a-nombre', 'a-edad', 'a-especie', 'a-pelaje', 'a-envergadura', 'a-escama'].forEach(
     id => { document.getElementById(id).value = ''; }
   );
@@ -142,9 +104,6 @@ function crearAnimal() {
   renderAnimales();
 }
 
-/**
- * Lee el formulario de usuario, crea y persiste.
- */
 function crearUsuario() {
   const nombre = document.getElementById('u-nombre').value.trim();
   const correo = document.getElementById('u-correo').value.trim();
@@ -166,10 +125,6 @@ function crearUsuario() {
   renderUsuarios();
 }
 
-/**
- * Elimina un animal por ID y actualiza la vista.
- * @param {number} id
- */
 function eliminarAnimal(id) {
   if (!confirm('¿Seguro que quieres eliminar este animal?')) return;
   zoo.eliminarAnimal(id);
@@ -178,10 +133,6 @@ function eliminarAnimal(id) {
   renderDashboard();
 }
 
-/**
- * Elimina un usuario por ID y actualiza la vista.
- * @param {number} id
- */
 function eliminarUsuario(id) {
   if (!confirm('¿Seguro que quieres eliminar este usuario?')) return;
   zoo.eliminarUsuario(id);
@@ -189,12 +140,6 @@ function eliminarUsuario(id) {
   renderUsuarios();
 }
 
-
-/* ══════════════════════════════════════════════════════
-   RENDERIZADO
-   ══════════════════════════════════════════════════════ */
-
-/** Renderiza el panel de estadísticas y animales recientes. */
 function renderDashboard() {
   const animales = zoo.getAnimales();
   const usuarios = zoo.getUsuarios();
@@ -213,7 +158,6 @@ function renderDashboard() {
   el.innerHTML = animales.slice(-6).reverse().map(a => itemAnimalHTML(a, false)).join('');
 }
 
-/** Renderiza la lista completa de animales con botón eliminar. */
 function renderAnimales() {
   const animales = zoo.getAnimales();
   const el = document.getElementById('animal-list');
@@ -224,7 +168,6 @@ function renderAnimales() {
   el.innerHTML = animales.map(a => itemAnimalHTML(a, true)).join('');
 }
 
-/** Renderiza la lista de usuarios con botón eliminar. */
 function renderUsuarios() {
   const usuarios = zoo.getUsuarios();
   const el = document.getElementById('user-list');
@@ -246,15 +189,6 @@ function renderUsuarios() {
   `).join('');
 }
 
-
-/* ── HELPERS ─────────────────────────────────────────── */
-
-/**
- * Genera el HTML de una fila de animal.
- * @param {Animal} a
- * @param {boolean} conBoton - Mostrar botón eliminar
- * @returns {string}
- */
 function itemAnimalHTML(a, conBoton) {
   const boton = conBoton
     ? `<button class="boton boton-peligro" onclick="eliminarAnimal(${a.id})">Eliminar</button>`
@@ -281,14 +215,12 @@ function labelRol(rol) {
   return { admin: 'Administrador', cuidador: 'Cuidador', veterinario: 'Veterinario' }[rol] || rol;
 }
 
-/** Muestra una alerta de éxito y la oculta después de 2.5s. */
 function mostrarAlerta(id) {
   const el = document.getElementById(id);
   el.classList.remove('hidden');
   setTimeout(() => el.classList.add('hidden'), 2500);
 }
 
-/** Escapa caracteres HTML para evitar XSS. */
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
