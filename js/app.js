@@ -45,7 +45,7 @@ function cargarDatosEjemplo() {
    NAVEGACIÓN
    ══════════════════════════════════════════════════════ */
 function initNav() {
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+  document.querySelectorAll('.navegacion-boton').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.tab;
       switchTab(target);
@@ -55,12 +55,12 @@ function initNav() {
 
 function switchTab(tabId) {
   // Actualizar botones
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === tabId);
+  document.querySelectorAll('.navegacion-boton').forEach(b => {
+    b.classList.toggle('activo', b.dataset.tab === tabId);
   });
   // Mostrar sección
-  document.querySelectorAll('.tab-section').forEach(s => {
-    s.classList.toggle('active', s.id === tabId);
+  document.querySelectorAll('.seccion-pestana').forEach(s => {
+    s.classList.toggle('activo', s.id === tabId);
   });
   // Renderizar contenido según pestaña
   if (tabId === 'dashboard') renderDashboard();
@@ -89,7 +89,7 @@ function initForms() {
 function toggleExtraFields() {
   const tipo = document.getElementById('a-tipo').value;
   ['mamifero', 'ave', 'reptil'].forEach(t => {
-    document.getElementById(`extra-${t}`).classList.toggle('hidden', t !== tipo);
+    document.getElementById(`extra-${t}`).classList.toggle('oculto', t !== tipo);
   });
 }
 
@@ -207,7 +207,7 @@ function renderDashboard() {
 
   const el = document.getElementById('dashboard-list');
   if (!animales.length) {
-    el.innerHTML = '<p class="empty">Sin animales registrados.</p>';
+    el.innerHTML = '<p class="vacio">Sin animales registrados.</p>';
     return;
   }
   el.innerHTML = animales.slice(-6).reverse().map(a => itemAnimalHTML(a, false)).join('');
@@ -218,7 +218,7 @@ function renderAnimales() {
   const animales = zoo.getAnimales();
   const el = document.getElementById('animal-list');
   if (!animales.length) {
-    el.innerHTML = '<p class="empty">Sin animales registrados.</p>';
+    el.innerHTML = '<p class="vacio">Sin animales registrados.</p>';
     return;
   }
   el.innerHTML = animales.map(a => itemAnimalHTML(a, true)).join('');
@@ -229,19 +229,19 @@ function renderUsuarios() {
   const usuarios = zoo.getUsuarios();
   const el = document.getElementById('user-list');
   if (!usuarios.length) {
-    el.innerHTML = '<p class="empty">Sin usuarios registrados.</p>';
+    el.innerHTML = '<p class="vacio">Sin usuarios registrados.</p>';
     return;
   }
   el.innerHTML = usuarios.map(u => `
-    <div class="item-row">
-      <div class="item-info">
-        <div class="item-title">
+    <div class="elemento-fila">
+      <div class="elemento-informacion">
+        <div class="elemento-titulo">
           ${escapeHtml(u.nombre)}
-          <span class="badge badge-${u.rol}">${labelRol(u.rol)}</span>
+          <span class="insignia insignia-${u.rol}">${labelRol(u.rol)}</span>
         </div>
-        <div class="item-meta">${escapeHtml(u.correo)}</div>
+        <div class="elemento-meta">${escapeHtml(u.correo)}</div>
       </div>
-      <button class="btn btn-danger" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+      <button class="boton boton-peligro" onclick="eliminarUsuario(${u.id})">Eliminar</button>
     </div>
   `).join('');
 }
@@ -257,16 +257,16 @@ function renderUsuarios() {
  */
 function itemAnimalHTML(a, conBoton) {
   const boton = conBoton
-    ? `<button class="btn btn-danger" onclick="eliminarAnimal(${a.id})">Eliminar</button>`
+    ? `<button class="boton boton-peligro" onclick="eliminarAnimal(${a.id})">Eliminar</button>`
     : '';
   return `
-    <div class="item-row">
-      <div class="item-info">
-        <div class="item-title">
+    <div class="elemento-fila">
+      <div class="elemento-informacion">
+        <div class="elemento-titulo">
           ${escapeHtml(a.nombre)}
-          <span class="badge badge-${a.tipo()}">${labelTipo(a.tipo())}</span>
+          <span class="insignia insignia-${a.tipo()}">${labelTipo(a.tipo())}</span>
         </div>
-        <div class="item-meta">${escapeHtml(a.describir())}</div>
+        <div class="elemento-meta">${escapeHtml(a.describir())}</div>
       </div>
       ${boton}
     </div>
