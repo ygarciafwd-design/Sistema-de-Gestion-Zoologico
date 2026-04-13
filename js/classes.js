@@ -1,23 +1,18 @@
 class Animal {
-  #id;
-  #nombre;
-  #edad;
-  #especie;
-
   constructor(id, nombre, edad, especie) {
-    this.#id      = id;
-    this.#nombre  = nombre;
-    this.#edad    = edad;
-    this.#especie = especie;
+    this.id      = id;
+    this.nombre  = nombre;
+    this.edad    = edad;
+    this.especie = especie;
   }
 
-  get id()      { return this.#id; }
-  get nombre()  { return this.#nombre; }
-  get edad()    { return this.#edad; }
-  get especie() { return this.#especie; }
+  get id()      { return this.id; }
+  get nombre()  { return this.nombre; }
+  get edad()    { return this.edad; }
+  get especie() { return this.especie; }
 
   describir() {
-    return `${this.#nombre} — ${this.#especie}, ${this.#edad} año(s)`;
+    return `${this.nombre} — ${this.especie}, ${this.edad} año(s)`;
   }
 
   tipo() { return 'animal'; }
@@ -25,10 +20,10 @@ class Animal {
   toJSON() {
     return {
       tipo:    this.tipo(),
-      id:      this.#id,
-      nombre:  this.#nombre,
-      edad:    this.#edad,
-      especie: this.#especie,
+      id:      this.id,
+      nombre:  this.nombre,
+      edad:    this.edad,
+      especie: this.especie,
     };
   }
 }
@@ -89,29 +84,25 @@ class Reptil extends Animal {
 }
 
 class Usuario {
-  #id;
-  #nombre;
-  #correo;
-  #rol;
-
+ 
   constructor(id, nombre, correo, rol) {
-    this.#id     = id;
-    this.#nombre = nombre;
-    this.#correo = correo;
-    this.#rol    = rol;
+    this.id     = id;
+    this.nombre = nombre;
+    this.correo = correo;
+    this.rol    = rol;
   }
 
-  get id()     { return this.#id; }
-  get nombre() { return this.#nombre; }
-  get correo() { return this.#correo; }
-  get rol()    { return this.#rol; }
+  get id()     { return this.id; }
+  get nombre() { return this.nombre; }
+  get correo() { return this.correo; }
+  get rol()    { return this.rol; }
 
   describir() {
-    return `${this.#nombre} <${this.#correo}> — Rol: ${this.#rol}`;
+    return `${this.nombre} <${this.correo}> — Rol: ${this.rol}`;
   }
 
   toJSON() {
-    return { id: this.#id, nombre: this.#nombre, correo: this.#correo, rol: this.#rol };
+    return { id: this.id, nombre: this.nombre, correo: this.correo, rol: this.rol };
   }
 }
 
